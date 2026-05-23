@@ -1,2 +1,4 @@
 venv/
 MachineLearningRating_v3.txt
+__pycache__/
+*.pyc
