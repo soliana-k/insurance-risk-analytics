@@ -8,17 +8,34 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class InsuranceEda:
+    """
+    A modular class for performing Exploratory Data Analysis on AlphaCare Insurance claim data.
+    
+    This class handles data quality assessment, visualization, and KPI calculation to support
+    risk segmentation and pricing strategy decisions.
+    
+    Attributes:
+        df (pd.DataFrame): The insurance dataset being analyzed.
+    """
     def __init__(self, df: pd.DataFrame):
+        """
+        Initialize with a copy of the input DataFrame to avoid modifying original data.
+        
+        Args:
+            df (pd.DataFrame): Raw insurance dataset.
+        """
         self.df = df.copy()
         
-    def descriptive_stats(self):
+    def descriptive_stats(self)-> None:
+        """Generate descriptive statistics and structural information for the dataset."""
         logger.info('--- STEP 1: Descriptive Statistics & Data Summarization ---')
         print("\n[Numerical Feature Summary]")
         print(self.df.describe().T)
         print("\n[DataFrame Structural Info]")
         print(self.df.info())
 
-    def data_quality_assessment(self):
+    def data_quality_assessment(self)-> None:
+        """Assess data quality, missing values, and perform initial type conversions."""
         logger.info('--- STEP 2: Data Quality & Structural Audit ---')
         
         # 1. Check Missingness
@@ -29,15 +46,17 @@ class InsuranceEda:
         cols_to_drop = missing_data[missing_data > 50].index.tolist()
         print(f"\nColumns where more than 50% data is missing: {cols_to_drop}")
 
-        if 'TransactionMonth' in self.df.columns:
-            self.df['TransactionMonth'] = pd.to_datetime(self.df['TransactionMonth'], errors='coerce')
-        if 'VehicleIntroDate' in self.df.columns:
-            self.df['VehicleIntroDate'] = pd.to_datetime(self.df['VehicleIntroDate'], errors='coerce')
+        date_cols = ['TransactionMonth', 'VehicleIntroDate']
+        for col in date_cols:
+            if col in self.df.columns:
+                self.df[col] = pd.to_datetime(self.df[col], errors='coerce')
+
         if 'CapitalOutstanding' in self.df.columns:
             self.df['CapitalOutstanding'] = self.df['CapitalOutstanding'].astype(str).str.replace(r'[$,\s]', '', regex=True)
             self.df['CapitalOutstanding'] = pd.to_numeric(self.df['CapitalOutstanding'], errors='coerce').fillna(0)
 
-    def remediate_missing_values(self):
+    def remediate_missing_values(self)-> None:
+        """Apply insurance-specific data remediation and type casting."""
         logger.info('--- STEP 3: Executing Insurance-Optimized Data Remediation ---')
         try:
             structural_drops = ['NumberOfVehiclesInFleet', 'CrossBorder', 'Language', 'Country', 'ItemType', 'StatutoryClass', 'StatutoryRiskType']
@@ -85,47 +104,46 @@ class InsuranceEda:
          
         logger.info('Assessment, cleanup, and type adjustments are fully committed.')
 
-    def univariate_analysis(self):
+    def univariate_analysis(self)-> None:
+        """Generate univariate visualizations for numerical and categorical features."""
         logger.info('--- STEP 4: Generating Univariate Visualizations ---')
         sns.set_theme(style="whitegrid", palette="muted")
-        num_cols = self.df.select_dtypes(include=['int64', 'float64']).columns
-        cat_cols = self.df.select_dtypes(include=['category']).columns
          
         print("\nRendering numerical features...")
+        num_cols = self.df.select_dtypes(include=['int64', 'float64']).columns
         for column in num_cols:
             if self.df[column].nunique() <= 2:
                 continue
-                 
             plt.figure(figsize=(8, 4))
             sns.histplot(self.df[column], kde=True, bins=40)
             plt.title(f'Distribution of {column}')
             plt.xlabel(column)
             plt.ylabel('Count')
             plt.tight_layout()
-            plt.show() 
+            plt.show()
             plt.close()
 
         print("\nRendering categorical features...")
+        cat_cols = self.df.select_dtypes(include=['category']).columns
         for column in cat_cols:
             unique_count = self.df[column].nunique()
-             
             plt.figure(figsize=(10, 4))
             if unique_count > 25:
                 order = self.df[column].value_counts().iloc[:10].index
                 sns.countplot(data=self.df, y=column, order=order)
-                plt.title(f'Top 10 Values for High-Cardinality Feature: {column}')
+                plt.title(f'Top 10 Values for {column}')
             else:
                 order = self.df[column].value_counts().index
                 ax = sns.countplot(data=self.df, x=column, order=order)
                 ax.set_yscale('log')
                 plt.xticks(rotation=45, ha='right')
                 plt.title(f'Distribution of {column}')
-                 
             plt.tight_layout()
             plt.show()
             plt.close()
 
-    def bivariate_multivariate_analysis(self):
+    def bivariate_multivariate_analysis(self)-> None:
+        """Analyze relationships between financial variables and geographic performance."""
         logger.info('--- STEP 5: Executing Bivariate & Multivariate Analysis ---')
         analysis_df = self.df.copy()
         analysis_df['TotalPremium'] = pd.to_numeric(analysis_df['TotalPremium'], errors='coerce')
@@ -176,7 +194,8 @@ class InsuranceEda:
             plt.tight_layout()
             plt.show()
 
-    def geographic_trends(self):
+    def geographic_trends(self)-> None:
+        """Analyze geographic and vehicle make patterns across provinces."""
         logger.info('--- STEP 6: Analyzing Geographic Trends across Provinces ---')
         geo_df = self.df.copy()
         if 'Province' in geo_df.columns and 'TotalPremium' in geo_df.columns:
@@ -212,7 +231,8 @@ class InsuranceEda:
                 for make, share in top_makes.items():
                     print(f"  {make:15}: {share:.2f}% of regional vehicle pool")
 
-    def outlier_detection(self):
+    def outlier_detection(self)-> None:
+        """Detect and visualize outliers in key financial variables."""
         logger.info('--- STEP 7: Executing Outlier Detection via Statistical Box Plots ---')
         outlier_df = self.df.copy()
         key_numerical_features = ['TotalClaims', 'TotalPremium', 'CustomValueEstimate']
@@ -242,7 +262,8 @@ class InsuranceEda:
                 plt.show()
 
 
-    def analyze_temporal_trends(self):
+    def analyze_temporal_trends(self)-> None:
+        """Analyze claim frequency and severity trends over the 18-month period."""
         logger.info('--- STEP 7.5: Analyzing Temporal Trends over 18 Months ---')
         temporal_df = self.df.copy()
         
@@ -287,7 +308,8 @@ class InsuranceEda:
         else:
             logger.warning("Missing 'TransactionMonth' or 'TotalClaims' columns. Skipping timeline trend run.")
 
-    def calculate_business_metrics(self):
+    def calculate_business_metrics(self)-> None:
+        """Calculate core insurance KPIs including Loss Ratio and segment-level insights."""
         logger.info('--- STEP 8: Calculating Core KPI Performance Metrics ---')
         
         total_claims = self.df['TotalClaims'].sum()
@@ -319,9 +341,12 @@ class InsuranceEda:
         print("\n=== VEHICLE MAKES WITH THE LOWEST AVERAGE CLAIMS ===")
         print(active_claims.tail(5).to_string(index=False, formatters={'TotalClaims': '{:,.2f}'.format}))
 
-    def run(self):
+    def run(self) -> pd.DataFrame:
         """
-        Main pipeline orchestrator. Sequential dependency handling.
+        Execute the full EDA pipeline in sequence.
+        
+        Returns:
+            pd.DataFrame: The cleaned and processed dataset.
         """
         self.descriptive_stats()           
         self.data_quality_assessment()
@@ -332,5 +357,7 @@ class InsuranceEda:
         self.outlier_detection()
         self.analyze_temporal_trends()
         self.calculate_business_metrics()
-        self.df.to_csv('../data/processed/cleaned_insurance_data.csv', index=False)
-        print("Cleaned data saved to data/processed/")
+
+        path='../data/processed/cleaned_insurance_data.csv'
+        self.df.to_csv(path, index=False)
+        print(f"Cleaned data saved to {path}")

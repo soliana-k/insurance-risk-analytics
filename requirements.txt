@@ -8,3 +8,4 @@ scipy
 jupyter
 ipykernel
 dvc
+pytest
