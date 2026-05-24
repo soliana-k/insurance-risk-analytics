@@ -1,5 +1,18 @@
+# Data & Large files
+data/raw/*.txt
+data/processed/*.csv
+*.csv
+*.txt
+
+# Environment
+.env
 venv/
-MachineLearningRating_v3.txt
 __pycache__/
 *.pyc
-*.csv
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
