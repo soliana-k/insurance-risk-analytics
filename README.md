@@ -91,23 +91,15 @@ dvc pull
 
 *DVC matches the specific cryptographic pointer values stored within `data/MachineLearningRating_v3.txt.dvc` and pulls the corresponding data binary straight out of your local tracking vault.*
 
-### 3. Switching Dataset Versions
 
-The pipeline maintains distinct, auditable tracking boundaries for both the raw source metrics and the finalized data-remediated structures. You can swap data version states smoothly on your workstation using Git and DVC in tandem:
+I use DVC to track different stages of the data for reproducibility.
 
-* **To load the Raw Data State (Version 1):**
+**Tracked Versions:**
+- `data/raw/MachineLearningRating_v3.txt` → Original raw data
+- `data/processed/cleaned_insurance_data.csv` → Cleaned and preprocessed version
+
+**To reproduce:**
 ```bash
-git checkout $(git log --all --grep="Track Version 1" -n 1 --format="%H")
-dvc checkout
-
-```
-
-
-* **To load the Remediated Clean Data State (Version 2):**
-```bash
-git checkout $(git log --all --grep="Track Version 2" -n 1 --format="%H")
-dvc checkout
-
-```
+dvc pull
 
 
