@@ -133,11 +133,11 @@ class InsuranceEda:
         existing_cols = [col for col in financial_cols if col in analysis_df.columns]
          
         corr_matrix = analysis_df[existing_cols].corr()
-        print("\n[Global Financial Feature Correlation]")
+        print("\n[Financial Feature Correlation]")
         print(corr_matrix)
         plt.figure(figsize=(6, 4))
         sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".3f", vmin=-1, vmax=1)
-        plt.title('Global Financial Correlation Matrix')
+        plt.title('Financial Correlation Matrix')
         plt.tight_layout()
         plt.show()
 
@@ -239,7 +239,53 @@ class InsuranceEda:
                 plt.tight_layout()
                 plt.show()
 
-    def calculate_portfolio_business_metrics(self):
+
+    def analyze_temporal_trends(self):
+        logger.info('--- STEP 7.5: Analyzing Temporal Trends over 18 Months ---')
+        temporal_df = self.df.copy()
+        
+        if 'TransactionMonth' in temporal_df.columns and 'TotalClaims' in temporal_df.columns:
+            
+            temporal_df['TransactionMonth'] = pd.to_datetime(temporal_df['TransactionMonth'])
+        
+            monthly_trends = temporal_df.groupby('TransactionMonth').agg(
+                Total_Claims_Paid=('TotalClaims', 'sum'),
+                Total_Claim_Incidents=('TotalClaims', lambda x: (x > 0).sum()),
+                Average_Claim_Severity=('TotalClaims', lambda x: x[x > 0].mean() if (x > 0).sum() > 0 else 0),
+                Total_Policies_Active=('TotalPremium', 'count')
+            ).sort_index().reset_index()
+            
+        
+            monthly_trends['Claim_Frequency_Rate'] = (monthly_trends['Total_Claim_Incidents'] / monthly_trends['Total_Policies_Active']) * 100
+            
+            print("\n[18-Month Timeline Trend Metrics Summary]")
+            print(monthly_trends[['TransactionMonth', 'Claim_Frequency_Rate', 'Average_Claim_Severity']])
+            
+            fig, ax1 = plt.subplots(figsize=(12, 5))
+            
+            # Left Axis: Claim Frequency
+            color = 'tab:blue'
+            ax1.set_xlabel('Transaction Timeline (Months)')
+            ax1.set_ylabel('Claim Frequency Rate (%)', color=color)
+            sns.lineplot(data=monthly_trends, x='TransactionMonth', y='Claim_Frequency_Rate', ax=ax1, color=color, marker='o', linewidth=2.5)
+            ax1.tick_params(axis='y', labelcolor=color)
+            ax1.grid(True, linestyle='--', alpha=0.3)
+            
+            # Right Axis: Claim Severity
+            ax2 = ax1.twinx()
+            color = 'tab:red'
+            ax2.set_ylabel('Average Claim Severity (Currency units)', color=color)
+            sns.lineplot(data=monthly_trends, x='TransactionMonth', y='Average_Claim_Severity', ax=ax2, color=color, marker='s', linewidth=2.5)
+            ax2.tick_params(axis='y', labelcolor=color)
+            
+            plt.title('Insurance Timeline Analysis: Claim Frequency vs Severity Trends')
+            fig.tight_layout()
+            plt.show()
+            plt.close()
+        else:
+            logger.warning("Missing 'TransactionMonth' or 'TotalClaims' columns. Skipping timeline trend run.")
+
+    def calculate_business_metrics(self):
         logger.info('--- STEP 8: Calculating Core KPI Performance Metrics ---')
         
         total_claims = self.df['TotalClaims'].sum()
@@ -261,6 +307,15 @@ class InsuranceEda:
                 metrics['Loss_Ratio'] = metrics['Total_Claims'] / metrics['Total_Premium']
                 print(metrics['Loss_Ratio'].sort_values(ascending=False))
                 print("-" * 50)
+        
+        make_stats = self.df.groupby('make')['TotalClaims'].mean().reset_index()
+        active_claims = make_stats[make_stats['TotalClaims'] > 0].sort_values(by='TotalClaims', ascending=False)
+
+        print("=== VEHICLE MAKES WITH THE HIGHEST AVERAGE CLAIMS ===")
+        print(active_claims.head(5).to_string(index=False, formatters={'TotalClaims': '{:,.2f}'.format}))
+
+        print("\n=== VEHICLE MAKES WITH THE LOWEST AVERAGE CLAIMS ===")
+        print(active_claims.tail(5).to_string(index=False, formatters={'TotalClaims': '{:,.2f}'.format}))
 
     def run(self):
         """
@@ -273,6 +328,7 @@ class InsuranceEda:
         self.bivariate_multivariate_analysis()
         self.geographic_trends()
         self.outlier_detection()
-        self.calculate_portfolio_business_metrics()
+        self.analyze_temporal_trends()
+        self.calculate_business_metrics()
                   
-        return self.df
+        return self.df.to_csv('../data/MachineLearningRating_v3.txt', sep='|', index=False)
