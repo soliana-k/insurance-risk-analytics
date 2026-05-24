@@ -39,47 +39,49 @@ class InsuranceEda:
 
     def remediate_missing_values(self):
         logger.info('--- STEP 3: Executing Insurance-Optimized Data Remediation ---')
+        try:
+            structural_drops = ['NumberOfVehiclesInFleet', 'CrossBorder', 'Language', 'Country', 'ItemType', 'StatutoryClass', 'StatutoryRiskType']
+            self.df.drop(columns=structural_drops, errors='ignore', inplace=True)
         
-        structural_drops = ['NumberOfVehiclesInFleet', 'CrossBorder', 'Language', 'Country', 'ItemType', 'StatutoryClass', 'StatutoryRiskType']
-        self.df.drop(columns=structural_drops, errors='ignore', inplace=True)
-       
-        implicit_boolean_cols = ['WrittenOff', 'Rebuilt', 'Converted']
-        for col in implicit_boolean_cols:
-            if col in self.df.columns:
-                self.df[col] = self.df[col].notna().astype(int)
-                 
-        if 'CustomValueEstimate' in self.df.columns:
-            self.df['Has_Custom_Estimate'] = self.df['CustomValueEstimate'].notna().astype(int)
-            self.df['CustomValueEstimate'] = self.df['CustomValueEstimate'].fillna(0)
-             
-        if 'Bank' in self.df.columns:
-            self.df['Bank'] = self.df['Bank'].fillna('Unfinanced_Or_Unknown')
-        if 'NewVehicle' in self.df.columns:
-            self.df['NewVehicle'] = self.df['NewVehicle'].fillna('Unknown')
-             
-        demographic_cols = ['AccountType', 'Gender', 'MaritalStatus']
-        for col in demographic_cols:
-            if col in self.df.columns:
-                mode_value = self.df[col].mode()[0]
-                self.df[col] = self.df[col].fillna(mode_value)
-                 
-        critical_identity_cols = ['make', 'Model', 'mmcode']
-        self.df.dropna(subset=critical_identity_cols, axis=0, inplace=True)
-        
-        # FIX: Explicitly check for string/object type using string literals, not built-in type arrays
-        nons = ['CustomValueEstimate', 'WrittenOff', 'Rebuilt', 'Converted', 'CrossBorder', 'NumberOfVehiclesInFleet', 'TransactionMonth', 'VehicleIntroDate', 'CapitalOutstanding', 'Has_Custom_Estimate']
-        string_columns = self.df.drop(columns=nons, errors='ignore').select_dtypes(include=['object', 'string']).columns
+            implicit_boolean_cols = ['WrittenOff', 'Rebuilt', 'Converted']
+            for col in implicit_boolean_cols:
+                if col in self.df.columns:
+                    self.df[col] = self.df[col].notna().astype(int)
+                    
+            if 'CustomValueEstimate' in self.df.columns:
+                self.df['Has_Custom_Estimate'] = self.df['CustomValueEstimate'].notna().astype(int)
+                self.df['CustomValueEstimate'] = self.df['CustomValueEstimate'].fillna(0)
+                
+            if 'Bank' in self.df.columns:
+                self.df['Bank'] = self.df['Bank'].fillna('Unfinanced_Or_Unknown')
+            if 'NewVehicle' in self.df.columns:
+                self.df['NewVehicle'] = self.df['NewVehicle'].fillna('Unknown')
+                
+            demographic_cols = ['AccountType', 'Gender', 'MaritalStatus']
+            for col in demographic_cols:
+                if col in self.df.columns:
+                    mode_value = self.df[col].mode()[0]
+                    self.df[col] = self.df[col].fillna(mode_value)
+                    
+            critical_identity_cols = ['make', 'Model', 'mmcode']
+            self.df.dropna(subset=critical_identity_cols, axis=0, inplace=True)
+            
+            nons = ['CustomValueEstimate', 'WrittenOff', 'Rebuilt', 'Converted', 'CrossBorder', 'NumberOfVehiclesInFleet', 'TransactionMonth', 'VehicleIntroDate', 'CapitalOutstanding', 'Has_Custom_Estimate']
+            string_columns = self.df.drop(columns=nons, errors='ignore').select_dtypes(include=['object', 'string']).columns
 
-        print("\n[String Column Cardinality Scan & Category Conversion]")
-        for column in string_columns:
-            unique_count = self.df[column].nunique()
-            print(f"Column: {column:22} | Unique Options: {unique_count}")
-             
-            if unique_count <= 1:
-                logger.warning(f"-> '{column}' has ZERO variance. Stays as object (flagged for dropping).")
-            else:
-                self.df[column] = self.df[column].astype('category')
-                logger.info(f"-> Successfully cast '{column}' to category type.")
+            print("\n[String Column Cardinality Scan & Category Conversion]")
+            for column in string_columns:
+                unique_count = self.df[column].nunique()
+                print(f"Column: {column:22} | Unique Options: {unique_count}")
+                
+                if unique_count <= 1:
+                    logger.warning(f"-> '{column}' has ZERO variance. Stays as object (flagged for dropping).")
+                else:
+                    self.df[column] = self.df[column].astype('category')
+                    logger.info(f"-> Successfully cast '{column}' to category type.")
+        except Exception as e:
+            logger.error(f"Unexpected error encountered during step 3: {str(e)}")
+            raise
          
         logger.info('Assessment, cleanup, and type adjustments are fully committed.')
 
@@ -330,5 +332,5 @@ class InsuranceEda:
         self.outlier_detection()
         self.analyze_temporal_trends()
         self.calculate_business_metrics()
-                  
-        return self.df.to_csv('../data/MachineLearningRating_v3.txt', sep='|', index=False)
+        self.df.to_csv('../data/processed/cleaned_insurance_data.csv', index=False)
+        print("Cleaned data saved to data/processed/")
