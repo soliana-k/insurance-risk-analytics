@@ -151,8 +151,8 @@ Using **SHAP**, we identified the top drivers of risk. The most impactful featur
 ## Reproducibility
 
 * **Modeling Code:** All model training, tuning, and evaluation scripts are located in `src/modeling.py`.
-* **Hypothesis Testing:** Statistical validation scripts are found in `src/hypothesis_tests.py`.
-* **Workflow:** Run `python notebooks/task_4_modeling.ipynb` to regenerate the pricing matrix and feature importance charts.
+* **Hypothesis Testing:** Statistical validation scripts are found in `src/hypothesis_testing.py`.
+* **Workflow:** Run `python notebooks/03_modeling.ipynb` to regenerate the pricing matrix and feature importance charts.
 
 ---
 
