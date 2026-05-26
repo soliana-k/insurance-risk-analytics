@@ -9,3 +9,5 @@ jupyter
 ipykernel
 dvc
 pytest
+xgboost
+shap
