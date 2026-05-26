@@ -102,4 +102,57 @@ I use DVC to track different stages of the data for reproducibility.
 ```bash
 dvc pull
 
+```
+### Task 3: A/B Hypothesis Testing
+
+To validate risk drivers, we conducted statistical tests on four key null hypotheses ($H_0$). We segmented the portfolio into baseline and test groups to determine if observed differences were statistically significant.
+
+#### Statistical Test Results
+
+| Hypothesis ($H_0$) | KPI | Test Used | $p$-value | Decision |
+| --- | --- | --- | --- | --- |
+| No risk difference by Province | Freq | Chi-Squared | $1.38 \times 10^{-15}$ | **REJECT $H_0$** |
+| No risk difference by Zip Code | Sev | $t$-test | $0.700$ | **FAIL TO REJECT** |
+| No margin diff by Zip Code | Margin | $t$-test | $0.246$ | **FAIL TO REJECT** |
+| No risk difference by Gender | Freq | Chi-Squared | $6.65 \times 10^{-5}$ | **REJECT $H_0$** |
+
+#### Business Recommendations
+
+* **Regional Pricing:** We found Gauteng has a significantly higher claim frequency (60% higher than Western Cape). **Recommendation:** Implement a regional risk-loading factor for premiums in high-density urban areas.
+* **Demographic Segmentation:** Men exhibit a 43% higher claim frequency than women. **Recommendation:** Incorporate gender-based frequency risk factors into the dynamic pricing model to ensure premiums reflect actual portfolio experience.
+
+---
+
+### Task 4: Statistical Modeling & Risk-Based Pricing
+
+We implemented a two-part pricing framework: a **Frequency Model** (to predict claim probability) and a **Severity Model** (to predict payout cost).
+
+#### Model Comparison Table
+
+| Model | Classification: F1-Score | Regression: RMSE | Regression: $R^2$ |
+| --- | --- | --- | --- |
+| **Linear Baseline** | 0.0198 | 35,802.77 | 0.17 |
+| **Random Forest** | 0.0207 | 36,060.84 | 0.16 |
+| **XGBoost Engine** | **0.0217** | 36,035.61 | 0.16 |
+
+#### Pricing Framework
+
+The final optimized premium is calculated as:
+
+
+$$\text{Premium} = (P(\text{claim}) \times \text{Predicted Severity}) + \text{Expense Loading (20\%)} + \text{Profit Margin (10\%)}$$
+
+#### Interpretability & Feature Drivers
+
+Using **SHAP**, we identified the top drivers of risk. The most impactful feature, `SumInsured`, correlates directly with severity, providing quantitative evidence that higher-value assets require higher premium baselines to cover potential total-loss scenarios.
+
+---
+
+## Reproducibility
+
+* **Modeling Code:** All model training, tuning, and evaluation scripts are located in `src/modeling.py`.
+* **Hypothesis Testing:** Statistical validation scripts are found in `src/hypothesis_tests.py`.
+* **Workflow:** Run `python notebooks/task_4_modeling.ipynb` to regenerate the pricing matrix and feature importance charts.
+
+---
 
