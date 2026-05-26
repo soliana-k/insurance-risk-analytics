@@ -13,7 +13,12 @@ def prepare_data_and_split(file_path: str, test_size: float = 0.3):
     categorical variables, preventing data leakage across train/test splits.
     """
     logger.info("Loading raw dataset for comprehensive preparation...")
-    df = pd.read_csv(file_path, sep='|', low_memory=False)
+    try:
+        logger.info("Attempting to load dataset...")
+        df = pd.read_csv(file_path, sep='|', low_memory=False)
+    except FileNotFoundError:
+        logger.error("Data file not found")
+        raise
     
   
     # STEP 1: IMPUTATION
