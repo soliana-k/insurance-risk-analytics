@@ -1,4 +1,4 @@
-
+![CI Status](https://github.com/soliana-k/insurance-risk-analytics/actions/workflows/unittests.yml/badge.svg)
 # End-to-End Insurance Risk Analytics
 
 This repository contains the data engineering pipeline, reproducible environment setup, and initial exploratory analyses developed for an auto-insurance portfolio. The project leverages 18 months of historical claims data to evaluate data quality, isolate risk indicators, and establish a version-controlled workflow.
@@ -154,5 +154,23 @@ Using **SHAP**, we identified the top drivers of risk. The most impactful featur
 * **Hypothesis Testing:** Statistical validation scripts are found in `src/hypothesis_testing.py`.
 * **Workflow:** Run `python notebooks/03_modeling.ipynb` to regenerate the pricing matrix and feature importance charts.
 
+---
+### Business Recommendations for ACIS
+
+Based on the analysis, I recommend the following concrete actions:
+
+1. **Regional Pricing Adjustment**  
+   Gauteng shows significantly higher claim frequency (p < 0.001). I recommend applying a **8–12% risk loading** on premiums in Gauteng to improve Loss Ratio.
+
+2. **Gender-Based Risk Factor**  
+   Men exhibit 43% higher claim frequency than women. I recommend incorporating gender as a pricing variable (subject to regulatory approval) to better reflect actual risk.
+
+3. **Vehicle Value Segmentation**  
+   SHAP analysis identified `SumInsured` as the strongest predictor. I recommend tiered pricing bands based on vehicle value to better match premium with expected severity.
+
+4. **Marketing Focus**  
+   Target low Loss Ratio provinces (e.g., Northern Cape, Western Cape) and Suzuki vehicle owners with promotional campaigns to drive profitable growth.
+
+   
 ---
 
